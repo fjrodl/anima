@@ -109,36 +109,39 @@ class JoystickWidget(QWidget):
 
 
 class EyesWidget(QWidget):
+    self.face_color = QColor(255, 0, 0)  # Default to red
+    def set_face_color(self, value):
+        # value: 0 (gray) to 255 (red)
+        self.face_color = QColor(value, 0, 0)
+        self.update()
+
     def __init__(self):
         super().__init__()
         self.pupil_x = 0.0
         self.pupil_y = 0.0
-
         self.pupil_size_mod = 0.0
         self.shine_size_mod = 0.0
-
         self.upper_lid_tilt = 0.0
         self.upper_lid_open = 1.0
-
         self.lower_lid_tilt = 0.0
         self.lower_lid_open = 1.0
-
         self.eye_separation_offset = 0.0  # Obsoleto, ver abajo
         self.iris_convergence_offset = 0.0
         self.pupil_size_asymmetry = 0.0
         self.upper_lid_asymmetry = 0.0
         self.lower_lid_asymmetry = 0.0
-
-        # Curvatura global (Curvatura de ambos párpados)
-        # 0.5 es neutral (factor 1.0), < 0.5 es convexo (sonrisa), > 0.5 es muy cóncavo
         self.lid_curvature = 0.5
-
-        # Intensidad de los LEDs (azul celeste) - Iniciar APAGADO
         self.led_intensity = 0.0
-        # Intensidad de las pantallas de los ojos (Power on/off) - Iniciar APAGADO
         self.screen_intensity = 0.0
-
+        self.iris_color = QColor("red")
         self.setMinimumSize(800, 500)
+
+    def set_iris_color(self, color):
+        if isinstance(color, str):
+            self.iris_color = QColor(color)
+        elif isinstance(color, QColor):
+            self.iris_color = color
+        self.update()
 
     def set_screen_intensity(self, val):
         self.screen_intensity = val
@@ -163,8 +166,8 @@ class EyesWidget(QWidget):
         self.update()
 
     def get_led_color(self):
-        # Transición de Color: Skyblue (On) -> Gris muy oscuro (Off)
-        c_on = QColor("skyblue")
+        # Transición de Color: Red (On) -> Gris muy oscuro (Off)
+        c_on = QColor("red")
         c_off = QColor(45, 45, 45)  # Gris oscuro elegante
         t = self.led_intensity
         rr = c_off.red() + (c_on.red() - c_off.red()) * t
@@ -270,12 +273,13 @@ class EyesWidget(QWidget):
         path.arcTo(cx - r2, cy2 - r2, r2 * 2, r2 * 2, 180 + theta, 180 - 2 * theta)
         path.lineTo(start_x, start_y)
 
-        # 1. Semicírculo negro (Visera) al fondo
+        # 1. Semicírculo de color de cara (slider) al fondo
         painter.setPen(Qt.NoPen)
-        painter.setBrush(QColor("black"))
+        painter.setBrush(self.face_color)
         painter.drawChord(QRectF(cx - r1, cy1 - r1, r1 * 2, r1 * 2), 0, 180 * 16)
 
         # Círculo negro central (Núcleo al fondo)
+        painter.setBrush(QColor("black"))
         painter.drawEllipse(QPointF(cx, cy1), r1 / 2, r1 / 2)
 
         # Elipse azul celeste muy alargada - Ajustada (-10% largo y subida 5px)
@@ -346,7 +350,7 @@ class EyesWidget(QWidget):
         iris_cx = cx + px_offset
         iris_cy = cy + py_offset
 
-        painter.setBrush(self.get_screen_color(QColor("skyblue")))
+        painter.setBrush(self.get_screen_color(self.iris_color))
         painter.drawEllipse(QPointF(iris_cx, iris_cy), iris_R, iris_R)
 
         # 3. Pupila interna (Negra) - Desplazada para efecto esférico
@@ -1028,11 +1032,11 @@ class CirclesInterface(QWidget):
             self.btn_leds.setText("LEDS: ON")
             self.btn_leds.setStyleSheet("""
                 QPushButton {
-                    background-color: #005a8d;
+                    background-color: #8d0000;
                     color: white; font-weight: bold;
-                    border: 2px solid #00aaff; border-radius: 8px;
+                    border: 2px solid #ff0000; border-radius: 8px;
                 }
-                QPushButton:hover { background-color: #0077c2; }
+                QPushButton:hover { background-color: #b20000; }
             """)
         else:
             self.btn_leds.setText("LEDS: OFF")
