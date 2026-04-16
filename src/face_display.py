@@ -87,9 +87,15 @@ class FaceDisplay(QWidget):
         self.iris_speed = msg.get("iris_speed", self.iris_speed)
         self.iris_color = msg.get("iris_color", self.iris_color)
         self.face_color = msg.get("face_color", 255)
+        self.face_front_color = msg.get("face_color", 255)
+        self.face_outline_color = msg.get("face_outline_color", "#ff0000")
         self.timer.setInterval(self.iris_speed)
         if hasattr(self.eyes, "set_face_color"):
             self.eyes.set_face_color(self.face_color)
+        if hasattr(self.eyes, "set_face_outline_color"):
+            self.eyes.set_face_outline_color(self.face_outline_color)
+        if hasattr(self.eyes, "set_face_front_color"):
+            self.eyes.set_face_front_color(self.face_front_color)
         # Fine iris position
         if "iris_x" in msg and "iris_y" in msg:
             self.eyes.set_pupil_pos(msg["iris_x"], msg["iris_y"])

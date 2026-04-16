@@ -109,10 +109,20 @@ class JoystickWidget(QWidget):
 
 
 class EyesWidget(QWidget):
-    self.face_color = QColor(255, 0, 0)  # Default to red
+
     def set_face_color(self, value):
         # value: 0 (gray) to 255 (red)
         self.face_color = QColor(value, 0, 0)
+        self.update()
+
+    def set_face_outline_color(self, color):
+        # color: string (e.g. '#ff0000') or QColor
+        if isinstance(color, str):
+            self.face_outline_color = QColor(color)
+        elif isinstance(color, QColor):
+            self.face_outline_color = color
+        else:
+            self.face_outline_color = QColor("#ff0000")
         self.update()
 
     def __init__(self):
@@ -134,6 +144,8 @@ class EyesWidget(QWidget):
         self.led_intensity = 0.0
         self.screen_intensity = 0.0
         self.iris_color = QColor("red")
+        self.face_color = QColor(255, 0, 0)  # Default to red
+        self.face_outline_color = QColor("#ff0000")  # Default to red
         self.setMinimumSize(800, 500)
 
     def set_iris_color(self, color):
@@ -244,6 +256,16 @@ class EyesWidget(QWidget):
         self.draw_eye(painter, cx2, cy_eyes, R, mirror=-1, eye_idx=1)
 
     def draw_head(self, painter, cx, cy, w, h):
+            # Fill the lower jaw region with the outline color
+            jaw_fill_path = QPainterPath()
+            jaw_fill_path.moveTo(left_c2_x, left_c2_y)
+            jaw_fill_path.arcTo(cx - r2, cy2 - r2, r2 * 2, r2 * 2, 180 + theta, 180 - 2 * theta)
+            jaw_fill_path.lineTo(cx + r2, cy2)
+            jaw_fill_path.lineTo(cx - r2, cy2)
+            jaw_fill_path.closeSubpath()
+            painter.setPen(Qt.NoPen)
+            painter.setBrush(self.face_outline_color)
+            painter.drawPath(jaw_fill_path)
         import math
 
         # Tamaños fijos independientes de la ventana
@@ -273,10 +295,12 @@ class EyesWidget(QWidget):
         path.arcTo(cx - r2, cy2 - r2, r2 * 2, r2 * 2, 180 + theta, 180 - 2 * theta)
         path.lineTo(start_x, start_y)
 
-        # 1. Semicírculo de color de cara (slider) al fondo
+        # 1. Semicírculo superior negro (head background)
         painter.setPen(Qt.NoPen)
-        painter.setBrush(self.face_color)
+        painter.setBrush(QColor("black"))
         painter.drawChord(QRectF(cx - r1, cy1 - r1, r1 * 2, r1 * 2), 0, 180 * 16)
+
+        # 1b. (Removed semicircle fill for front face)
 
         # Círculo negro central (Núcleo al fondo)
         painter.setBrush(QColor("black"))
@@ -300,29 +324,13 @@ class EyesWidget(QWidget):
         painter.setBrush(Qt.NoBrush)
         painter.drawPath(path)
 
-        # 3. Segundo contorno azul celeste - HÍBRIDO (Solo arriba elíptico)
-        ry_blue = r1 * 0.75  # Elipse para la "frente"
-        path_blue = QPainterPath()
+        # 3. Segundo contorno: color configurable (face_outline_color)
+        pen_outline = QPen(self.face_outline_color)
+        pen_outline.setWidth(3)
+        pen_outline.setJoinStyle(Qt.RoundJoin)
+        painter.setPen(pen_outline)
+        painter.drawPath(path)
 
-        # Empezamos desde la tangente derecha del círculo inferior para subir
-        path_blue.moveTo(start_x, start_y)
-        # La elipse solo se aplica al arco superior. Para evitar curvas hacia adentro
-        # usamos r1 para las partes laterales y ry_blue solo para la altura
-        path_blue.arcTo(
-            cx - r1, cy1 - ry_blue, r1 * 2, ry_blue * 2, -theta, 180 + 2 * theta
-        )
-        path_blue.lineTo(left_c2_x, left_c2_y)
-        # Abajo es circular (C2)
-        path_blue.arcTo(cx - r2, cy2 - r2, r2 * 2, r2 * 2, 180 + theta, 180 - 2 * theta)
-        path_blue.closeSubpath()
-
-        # Usar el mismo color dinámico
-        color_led = self.get_led_color()
-        pen_blue = QPen(color_led)
-        pen_blue.setWidth(3)
-        pen_blue.setJoinStyle(Qt.RoundJoin)
-        painter.setPen(pen_blue)
-        painter.drawPath(path_blue)
 
     def draw_eye(self, painter, cx, cy, R, mirror, eye_idx):
         painter.save()

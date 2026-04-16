@@ -7,12 +7,35 @@ import json
 from src.anima import JoystickWidget
 
 
+
 class BehaviorGenerator(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Behavior Generator Control Panel")
         self.resize(420, 800)
         layout = QVBoxLayout(self)
+
+
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Behavior Generator Control Panel")
+        self.resize(420, 800)
+        layout = QVBoxLayout(self)
+
+        # Face color slider
+        self.face_color_label = QLabel("Face Color:")
+        layout.addWidget(self.face_color_label)
+        self.face_color_slider = QSlider(Qt.Horizontal)
+        self.face_color_slider.setRange(0, 255)
+        self.face_color_slider.setValue(255)  # Default to red
+        layout.addWidget(self.face_color_slider)
+
+        # Face outline color picker (for the red line)
+        self.face_outline_color = "#ff0000"  # Default to red
+        self.face_outline_color_btn = QPushButton("Choose Face Outline Color")
+        self.face_outline_color_btn.setStyleSheet(f"background-color: {self.face_outline_color}")
+        self.face_outline_color_btn.clicked.connect(self.choose_face_outline_color)
+        layout.addWidget(self.face_outline_color_btn)
 
         # Behavior selector
         self.behavior_label = QLabel("Select Behavior:")
@@ -85,6 +108,16 @@ class BehaviorGenerator(QWidget):
         self.joy_lower.positionChanged.connect(self.send_all)
         self.blink_speed_slider.valueChanged.connect(self.send_all)
         self.iris_speed_slider.valueChanged.connect(self.send_all)
+        self.face_color_slider.valueChanged.connect(self.send_all)
+        self.face_outline_color_btn.clicked.connect(self.send_all)
+
+    def choose_face_outline_color(self):
+        from PySide6.QtWidgets import QColorDialog
+        color = QColorDialog.getColor()
+        if color.isValid():
+            self.face_outline_color = color.name()
+            self.face_outline_color_btn.setStyleSheet(f"background-color: {self.face_outline_color}")
+            self.send_all()
         # Only send color when changed, not on every click (prevents overwriting user changes)
         self.behavior_combo.currentIndexChanged.connect(self.set_behavior_defaults)
         self.tts_btn.clicked.connect(self.send_tts)
@@ -176,7 +209,9 @@ class BehaviorGenerator(QWidget):
             "blink_speed": self.blink_speed_slider.value(),
             "iris_speed": self.iris_speed_slider.value(),
             "iris_color": self.iris_color,
-            "behavior": self.behavior_combo.currentText()
+            "behavior": self.behavior_combo.currentText(),
+            "face_color": self.face_color_slider.value(),
+            "face_outline_color": self.face_outline_color
         }
         self.sock.sendto(json.dumps(msg).encode(), self.target)
 
