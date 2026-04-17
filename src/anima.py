@@ -256,17 +256,35 @@ class EyesWidget(QWidget):
         self.draw_eye(painter, cx2, cy_eyes, R, mirror=-1, eye_idx=1)
 
     def draw_head(self, painter, cx, cy, w, h):
-            # Fill the lower jaw region with the outline color
-            jaw_fill_path = QPainterPath()
-            jaw_fill_path.moveTo(left_c2_x, left_c2_y)
-            jaw_fill_path.arcTo(cx - r2, cy2 - r2, r2 * 2, r2 * 2, 180 + theta, 180 - 2 * theta)
-            jaw_fill_path.lineTo(cx + r2, cy2)
-            jaw_fill_path.lineTo(cx - r2, cy2)
-            jaw_fill_path.closeSubpath()
-            painter.setPen(Qt.NoPen)
-            painter.setBrush(self.face_outline_color)
-            painter.drawPath(jaw_fill_path)
         import math
+
+        # Tamaños fijos independientes de la ventana
+        hh = 450
+        r1 = 140
+        r2 = 110
+
+        # Geometría base circular para el robot (RESTABLECIDA)
+        cy1 = cy - ((hh / 2) - r1) * 0.6
+        cy2 = cy + ((hh / 2) - r2) * 0.6
+        D = cy2 - cy1
+        # Evitar division by zero or domain errors
+        if D <= abs(r1 - r2):
+            return
+        phi = math.asin((r1 - r2) / D)
+        theta = math.degrees(phi)
+
+        # Camino base (Contorno Negro)
+        path = QPainterPath()
+        start_x = cx + r1 * math.cos(math.radians(-theta))
+        start_y = cy1 - r1 * math.sin(math.radians(-theta))
+        path.moveTo(start_x, start_y)
+        path.arcTo(cx - r1, cy1 - r1, r1 * 2, r1 * 2, -theta, 180 + 2 * theta)
+        left_c2_x = cx + r2 * math.cos(math.radians(180 + theta))
+        left_c2_y = cy2 - r2 * math.sin(math.radians(180 + theta))
+        path.lineTo(left_c2_x, left_c2_y)
+        path.arcTo(cx - r2, cy2 - r2, r2 * 2, r2 * 2, 180 + theta, 180 - 2 * theta)
+        path.lineTo(start_x, start_y)
+
 
         # Tamaños fijos independientes de la ventana
         hh = 450
